@@ -3,9 +3,13 @@ package com.pechenegmobilecompanyltd.concentration.presentation.main
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pechenegmobilecompanyltd.concentration.data.manager.PresetManager
 import com.pechenegmobilecompanyltd.concentration.data.model.Session
+import com.pechenegmobilecompanyltd.concentration.data.model.TimerPreset
 import com.pechenegmobilecompanyltd.concentration.data.remote.auth.FirebaseAuthDataSource
+import com.pechenegmobilecompanyltd.concentration.domain.repository.PresetRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.SessionRepository
+import com.pechenegmobilecompanyltd.concentration.domain.repository.UserSettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +33,21 @@ class TimerViewModel : ViewModel(), KoinComponent {
     private var totalSeconds = 25 * 60
     private var remainingSeconds = totalSeconds
 
+    private val presetRepository: PresetRepository by inject()
+
+    private val userSettingsRepository: UserSettingsRepository by inject()
+    private var currentPreset: TimerPreset = presetRepository.getDefaultPreset()
+
     init {
+        viewModelScope.launch {
+            // Следим за изменениями пресета
+            PresetManager.currentPreset.collect { preset ->
+                applyPreset(preset)
+            }
+        }
         // Принудительно проверяем авторизацию при создании ViewModel
         viewModelScope.launch {
+            loadSavedPreset()
             try {
                 // Просто проверяем, что пользователь есть
                 authDataSource.getCurrentUserId()
@@ -40,6 +56,37 @@ class TimerViewModel : ViewModel(), KoinComponent {
                 // Игнорируем ошибки - авторизация произойдет при первом сохранении
                 loadTodayStats()
             }
+        }
+    }
+
+    private suspend fun loadSavedPreset() {
+        val savedPreset = userSettingsRepository.getSelectedPreset()
+        applyPreset(savedPreset)
+    }
+
+    // Обновляем applyPreset для сохранения
+    fun applyPreset(preset: TimerPreset) {
+        // Отменяем текущий таймер
+        timerJob?.cancel()
+
+        // Устанавливаем новые значения
+        currentPreset = preset
+        totalSeconds = preset.workDuration * 60
+        remainingSeconds = totalSeconds
+
+        // Немедленно обновляем состояние таймера
+        _timerState.update {
+            it.copy(
+                progress = 1f,
+                currentTime = formatTime(remainingSeconds),
+                isRunning = false,
+                currentPhase = TimerPhase.Work // Сбрасываем на фазу работы
+            )
+        }
+
+        // Сохраняем в Firebase
+        viewModelScope.launch {
+            userSettingsRepository.saveSelectedPreset(preset)
         }
     }
 
@@ -84,10 +131,14 @@ class TimerViewModel : ViewModel(), KoinComponent {
 
     private fun updateTimerState() {
         val progress = remainingSeconds.toFloat() / totalSeconds.toFloat()
+        val newTime = formatTime(remainingSeconds)
+
+        Log.d("TimerDebug", "Updating timer: $newTime, progress: $progress")
+
         _timerState.update {
             it.copy(
                 progress = progress,
-                currentTime = formatTime(remainingSeconds)
+                currentTime = newTime
             )
         }
     }
@@ -111,31 +162,22 @@ class TimerViewModel : ViewModel(), KoinComponent {
                         duration = totalSeconds / 60,
                         type = "work"
                     )
-                    val result = repository.saveSession(session)
-
-                    result.onSuccess {
-                        Log.d("TimerDebug", "Session saved successfully!")
-                        // Переключаемся на перерыв
+                    repository.saveSession(session).onSuccess {
+                        // Переключаемся на перерыв с учетом текущего пресета
                         switchToBreakPhase()
-                        loadTodayStats() // Обновляем статистику
-                    }.onFailure { error ->
-                        Log.e("TimerDebug", "Failed to save session: ${error.message}")
-                        // Все равно переключаемся, но показываем ошибку?
-                        switchToBreakPhase()
+                        loadTodayStats()
                     }
                 } catch (e: Exception) {
-                    Log.e("TimerDebug", "Exception in completeSession: ${e.message}")
                     switchToBreakPhase()
                 }
             } else {
-                // Перерыв завершен, возвращаемся к работе
                 switchToWorkPhase()
             }
         }
     }
 
     private fun switchToWorkPhase() {
-        totalSeconds = 25 * 60
+        totalSeconds = currentPreset.workDuration * 60 // Важно: используем currentPreset
         remainingSeconds = totalSeconds
         _timerState.update {
             it.copy(
@@ -148,7 +190,7 @@ class TimerViewModel : ViewModel(), KoinComponent {
     }
 
     private fun switchToBreakPhase() {
-        totalSeconds = 5 * 60
+        totalSeconds = currentPreset.breakDuration * 60 // Важно: используем currentPreset
         remainingSeconds = totalSeconds
         _timerState.update {
             it.copy(

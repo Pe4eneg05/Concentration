@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.rememberNavController
+import com.pechenegmobilecompanyltd.concentration.data.model.TimerPreset
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,10 +43,12 @@ import org.koin.androidx.compose.koinViewModel
 fun TimerScreen(
     viewModel: TimerViewModel = koinViewModel(),
     onNavigateToStats: () -> Unit,
-    onNavigateToSettings: () -> Unit // Добавляем навигацию в настройки
-)  {
+    onNavigateToSettings: () -> Unit,
+    onShowPresets: () -> Unit
+) {
     val state by viewModel.timerState.collectAsState()
 
+    // Добавляем наблюдение за состоянием
     LaunchedEffect(Unit) {
         viewModel.loadTodayStats()
     }
@@ -71,7 +75,6 @@ fun TimerScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Круговой прогресс-бар с таймером
             CircularTimer(
                 progress = state.progress,
                 timeText = state.currentTime,
@@ -81,7 +84,6 @@ fun TimerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Кнопки управления
             TimerControls(
                 isRunning = state.isRunning,
                 currentPhase = state.currentPhase,
@@ -93,7 +95,6 @@ fun TimerScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Статистика за сегодня
             TodayStats(
                 sessionsCount = state.totalSessionsToday,
                 focusTime = state.totalFocusTimeToday
@@ -101,7 +102,6 @@ fun TimerScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Кнопка перехода к статистике
             Button(
                 onClick = onNavigateToStats,
                 colors = ButtonDefaults.buttonColors(
@@ -113,7 +113,6 @@ fun TimerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Кнопка перехода к настройкам
             Button(
                 onClick = onNavigateToSettings,
                 colors = ButtonDefaults.buttonColors(
@@ -121,6 +120,17 @@ fun TimerScreen(
                 )
             ) {
                 Text("Настройки")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onShowPresets,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text("Режимы таймера")
             }
         }
     }
@@ -181,6 +191,7 @@ fun CircularTimer(
         )
     }
 }
+
 
 @Composable
 fun TimerControls(

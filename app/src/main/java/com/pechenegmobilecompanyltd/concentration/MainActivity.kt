@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.pechenegmobilecompanyltd.concentration.presentation.statistics.navigation.AppNavigation
+import com.pechenegmobilecompanyltd.concentration.presentation.navigation.AppNavigation
 import com.pechenegmobilecompanyltd.concentration.ui.theme.FocusConcentrationTheme
 
 class MainActivity : ComponentActivity() {

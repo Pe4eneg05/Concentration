@@ -1,13 +1,14 @@
-package com.pechenegmobilecompanyltd.concentration.presentation.statistics.navigation
+package com.pechenegmobilecompanyltd.concentration.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pechenegmobilecompanyltd.concentration.presentation.main.TimerScreen
+import com.pechenegmobilecompanyltd.concentration.presentation.presets.PresetScreen
+import com.pechenegmobilecompanyltd.concentration.presentation.settings.SettingsScreen
 import com.pechenegmobilecompanyltd.concentration.presentation.statistics.AdvancedStatsScreen
 import com.pechenegmobilecompanyltd.concentration.presentation.statistics.StatScreen
-import com.pechenegmobilecompanyltd.concentration.presentation.settings.SettingsScreen
 
 @Composable
 fun AppNavigation() {
@@ -20,7 +21,8 @@ fun AppNavigation() {
         composable(Screen.Timer.route) {
             TimerScreen(
                 onNavigateToStats = { navController.navigate(Screen.Statistics.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onShowPresets = { navController.navigate(Screen.Presets.route) }
             )
         }
 
@@ -42,13 +44,20 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable(Screen.Presets.route) {
+            PresetScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
 
-// Класс для определения экранов
+// Обновляем класс экранов
 sealed class Screen(val route: String) {
     object Timer : Screen("timer")
     object Statistics : Screen("statistics")
     object AdvancedStatistics : Screen("advanced_statistics")
     object Settings : Screen("settings")
+    object Presets : Screen("presets") // Добавляем экран пресетов
 }

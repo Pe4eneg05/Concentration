@@ -9,12 +9,17 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.pechenegmobilecompanyltd.concentration.data.repository.SettingsRepositoryImpl
 import com.pechenegmobilecompanyltd.concentration.data.remote.auth.FirebaseAuthDataSource
 import com.pechenegmobilecompanyltd.concentration.data.remote.firestore.FirestoreDataSource
+import com.pechenegmobilecompanyltd.concentration.data.repository.PresetRepositoryImpl
 import com.pechenegmobilecompanyltd.concentration.data.repository.SessionRepositoryImpl
 import com.pechenegmobilecompanyltd.concentration.data.repository.StatsRepositoryImpl
+import com.pechenegmobilecompanyltd.concentration.data.repository.UserSettingsRepositoryImpl
+import com.pechenegmobilecompanyltd.concentration.domain.repository.PresetRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.SessionRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.SettingsRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.StatsRepository
+import com.pechenegmobilecompanyltd.concentration.domain.repository.UserSettingsRepository
 import com.pechenegmobilecompanyltd.concentration.presentation.main.TimerViewModel
+import com.pechenegmobilecompanyltd.concentration.presentation.presets.PresetViewModel
 import com.pechenegmobilecompanyltd.concentration.presentation.settings.SettingsViewModel
 import com.pechenegmobilecompanyltd.concentration.presentation.statistics.AdvancedStatsViewModel
 import com.pechenegmobilecompanyltd.concentration.presentation.statistics.StatViewModel
@@ -41,10 +46,13 @@ val appModule = module {
     single<SessionRepository> { SessionRepositoryImpl() }
     single<SettingsRepository> { SettingsRepositoryImpl() }
     single<StatsRepository> { StatsRepositoryImpl() }
+    single<PresetRepository> { PresetRepositoryImpl() }
+    single<UserSettingsRepository> { UserSettingsRepositoryImpl() }
 
     // ViewModels
     viewModel { TimerViewModel() }
     viewModel { StatViewModel() }
     viewModel { SettingsViewModel() }
     viewModel { AdvancedStatsViewModel() }
+    viewModel { PresetViewModel() }
 }
