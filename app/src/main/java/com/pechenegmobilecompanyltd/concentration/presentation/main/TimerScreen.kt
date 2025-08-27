@@ -31,11 +31,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.compose.rememberNavController
-import com.pechenegmobilecompanyltd.concentration.data.model.TimerPreset
+import com.pechenegmobilecompanyltd.concentration.presentation.utils.swipeable
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,7 +79,15 @@ fun TimerScreen(
                 progress = state.progress,
                 timeText = state.currentTime,
                 phase = state.currentPhase,
-                size = 300.dp
+                size = 300.dp,
+                onSwipeLeft = {
+                    if (state.isRunning) viewModel.pauseTimer() else viewModel.startTimer()
+                },
+                onSwipeRight = { viewModel.resetTimer() },
+                onSwipeUp = { viewModel.quickRestart() },
+                onSwipeDown = {
+                    if (state.currentPhase is TimerPhase.Break) viewModel.skipBreak()
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,10 +95,12 @@ fun TimerScreen(
             TimerControls(
                 isRunning = state.isRunning,
                 currentPhase = state.currentPhase,
+                progress = state.progress,
                 onStart = { viewModel.startTimer() },
                 onPause = { viewModel.pauseTimer() },
                 onReset = { viewModel.resetTimer() },
-                onSkipBreak = { viewModel.skipBreak() }
+                onSkipBreak = { viewModel.skipBreak() },
+                onQuickRestart = { viewModel.quickRestart() }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -141,7 +151,11 @@ fun CircularTimer(
     progress: Float,
     timeText: String,
     phase: TimerPhase,
-    size: Dp
+    size: Dp,
+    onSwipeLeft: () -> Unit = {}, // Свайп влево - пауза/старт
+    onSwipeRight: () -> Unit = {}, // Свайп вправо - сброс
+    onSwipeUp: () -> Unit = {}, // Свайп вверх - быстрый перезапуск
+    onSwipeDown: () -> Unit = {} // Свайп вниз - пропуск перерыва
 ) {
     val progressColor = when (phase) {
         is TimerPhase.Work -> Color(0xFFFF6B6B) // Красный для работы
@@ -150,7 +164,14 @@ fun CircularTimer(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(size)
+        modifier = Modifier
+            .size(size)
+            .swipeable(
+                onSwipeLeft = onSwipeLeft,
+                onSwipeRight = onSwipeRight,
+                onSwipeUp = onSwipeUp,
+                onSwipeDown = onSwipeDown
+            )
     ) {
         // Фоновый круг
         Canvas(modifier = Modifier.size(size)) {
@@ -179,15 +200,15 @@ fun CircularTimer(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Текст фазы
         Text(
             text = when (phase) {
-                is TimerPhase.Work -> "Работа"
-                is TimerPhase.Break -> "Отдых"
+                is TimerPhase.Work -> "\nРабота\n↕️ Свайп для действий"
+                is TimerPhase.Break -> "\nОтдых\n↕️ Свайп для действий"
             },
-            fontSize = 16.sp,
+            fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            modifier = Modifier.padding(top = 80.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 90.dp)
         )
     }
 }
@@ -197,10 +218,12 @@ fun CircularTimer(
 fun TimerControls(
     isRunning: Boolean,
     currentPhase: TimerPhase,
+    progress: Float,
     onStart: () -> Unit,
     onPause: () -> Unit,
     onReset: () -> Unit,
-    onSkipBreak: () -> Unit
+    onSkipBreak: () -> Unit,
+    onQuickRestart: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -237,6 +260,18 @@ fun TimerControls(
                 )
             ) {
                 Text("Сброс")
+            }
+        }
+
+        // Кнопка быстрого перезапуска (когда таймер не запущен и не на начале)
+        if (!isRunning && progress < 1f) {
+            Button(
+                onClick = onQuickRestart,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFA726)
+                )
+            ) {
+                Text("Начать заново")
             }
         }
 

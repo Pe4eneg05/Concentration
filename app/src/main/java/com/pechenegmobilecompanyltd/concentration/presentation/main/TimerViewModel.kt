@@ -59,6 +59,18 @@ class TimerViewModel : ViewModel(), KoinComponent {
         }
     }
 
+    fun quickRestart() {
+        timerJob?.cancel()
+        remainingSeconds = totalSeconds
+        _timerState.update {
+            it.copy(
+                progress = 1f,
+                currentTime = formatTime(remainingSeconds),
+                isRunning = false
+            )
+        }
+    }
+
     private suspend fun loadSavedPreset() {
         val savedPreset = userSettingsRepository.getSelectedPreset()
         applyPreset(savedPreset)
