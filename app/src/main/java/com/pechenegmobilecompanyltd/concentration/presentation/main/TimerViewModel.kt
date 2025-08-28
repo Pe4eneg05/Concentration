@@ -9,6 +9,7 @@ import com.pechenegmobilecompanyltd.concentration.data.model.TimerPreset
 import com.pechenegmobilecompanyltd.concentration.data.remote.auth.FirebaseAuthDataSource
 import com.pechenegmobilecompanyltd.concentration.domain.repository.PresetRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.SessionRepository
+import com.pechenegmobilecompanyltd.concentration.domain.repository.UserDataRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.UserSettingsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -37,6 +38,8 @@ class TimerViewModel : ViewModel(), KoinComponent {
 
     private val userSettingsRepository: UserSettingsRepository by inject()
     private var currentPreset: TimerPreset = presetRepository.getDefaultPreset()
+
+    private val userDataRepository: UserDataRepository by inject()
 
     init {
         viewModelScope.launch {
@@ -175,7 +178,22 @@ class TimerViewModel : ViewModel(), KoinComponent {
                         type = "work"
                     )
                     repository.saveSession(session).onSuccess {
-                        // Переключаемся на перерыв с учетом текущего пресета
+                        // Обновляем статистику пользователя
+                        viewModelScope.launch {
+                            userDataRepository.updateSessionStats(1, session.duration)
+
+                            // Обновляем сегодняшнюю статистику для проверки рекордов
+                            val todaySessions = repository.getTodaySessions().getOrElse { emptyList() }
+                            val sessionsToday = todaySessions.size
+
+                            val userData = userDataRepository.getUserData()
+                            if (sessionsToday > userData.bestDaySessions) {
+                                userDataRepository.updateBestDay(sessionsToday, Date())
+                            }
+
+                            // TODO: Добавить обновление стрика
+                        }
+
                         switchToBreakPhase()
                         loadTodayStats()
                     }

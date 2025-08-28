@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pechenegmobilecompanyltd.concentration.presentation.main.TimerScreen
 import com.pechenegmobilecompanyltd.concentration.presentation.presets.PresetScreen
+import com.pechenegmobilecompanyltd.concentration.presentation.profile.ProfileScreen
 import com.pechenegmobilecompanyltd.concentration.presentation.settings.SettingsScreen
 import com.pechenegmobilecompanyltd.concentration.presentation.statistics.AdvancedStatsScreen
 import com.pechenegmobilecompanyltd.concentration.presentation.statistics.StatScreen
@@ -22,6 +23,7 @@ fun AppNavigation() {
             TimerScreen(
                 onNavigateToStats = { navController.navigate(Screen.Statistics.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onShowPresets = { navController.navigate(Screen.Presets.route) }
             )
         }
@@ -50,12 +52,19 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
 
 // Обновляем класс экранов
 sealed class Screen(val route: String) {
     object Timer : Screen("timer")
+    object Profile : Screen("profile")
     object Statistics : Screen("statistics")
     object AdvancedStatistics : Screen("advanced_statistics")
     object Settings : Screen("settings")

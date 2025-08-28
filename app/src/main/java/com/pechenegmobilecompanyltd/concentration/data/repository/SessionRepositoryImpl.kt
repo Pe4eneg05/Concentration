@@ -16,22 +16,19 @@ class SessionRepositoryImpl : SessionRepository, KoinComponent {
     private val firestoreDataSource: FirestoreDataSource by inject()
 
     private var cachedUserId: String? = null
-    private val mutex = Mutex() // Защита от race condition
+    private val mutex = Mutex()
 
     private suspend fun getUserId(): String = mutex.withLock {
-        // Если уже есть кешированный ID - возвращаем его
         if (cachedUserId != null) {
             return cachedUserId!!
         }
 
-        // Пытаемся получить существующего пользователя
         val existingUserId = authDataSource.getCurrentUserId()
         if (existingUserId != null) {
             cachedUserId = existingUserId
             return existingUserId
         }
 
-        // Если пользователя нет - создаем нового (ТОЛЬКО ОДИН РАЗ!)
         val newUserId = authDataSource.signInAnonymously()
         cachedUserId = newUserId
         return newUserId
@@ -40,7 +37,8 @@ class SessionRepositoryImpl : SessionRepository, KoinComponent {
     override suspend fun saveSession(session: Session): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             val userId = getUserId()
-            firestoreDataSource.saveSession(session, userId)
+            val sessionWithUserId = session.copy(userId = userId)
+            firestoreDataSource.saveSession(sessionWithUserId, userId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

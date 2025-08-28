@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,6 +45,7 @@ fun TimerScreen(
     viewModel: TimerViewModel = koinViewModel(),
     onNavigateToStats: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onShowPresets: () -> Unit
 ) {
     val state by viewModel.timerState.collectAsState()
@@ -58,6 +60,12 @@ fun TimerScreen(
             TopAppBar(
                 title = { Text("Концентрация и Фокус") },
                 actions = {
+                    IconButton(onClick = { onNavigateToProfile() }) {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Профиль"
+                        )
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,

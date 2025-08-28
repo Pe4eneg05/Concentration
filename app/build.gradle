@@ -49,6 +49,7 @@ dependencies {
     // Firebase Auth и Firestore
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.android.gms:play-services-auth:21.4.0")
     // Koin для Dependency Injection
     implementation("io.insert-koin:koin-android:4.1.0")
     implementation("io.insert-koin:koin-androidx-compose:4.1.0") // Важно для Compose!
@@ -66,6 +67,9 @@ dependencies {
     implementation libs.androidx.datastore.core
     implementation libs.ui.graphics
     implementation libs.androidx.compose.material
+    implementation libs.androidx.credentials
+    implementation libs.androidx.credentials.play.services.auth
+    implementation libs.googleid
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core

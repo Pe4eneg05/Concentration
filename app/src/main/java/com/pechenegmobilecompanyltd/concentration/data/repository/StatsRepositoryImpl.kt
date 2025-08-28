@@ -5,6 +5,7 @@ import com.pechenegmobilecompanyltd.concentration.data.model.ProductivityTrend
 import com.pechenegmobilecompanyltd.concentration.data.model.WeeklyStats
 import com.pechenegmobilecompanyltd.concentration.domain.repository.SessionRepository
 import com.pechenegmobilecompanyltd.concentration.domain.repository.StatsRepository
+import com.pechenegmobilecompanyltd.concentration.domain.repository.UserDataRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.*
@@ -12,6 +13,7 @@ import kotlin.math.max
 
 class StatsRepositoryImpl : StatsRepository, KoinComponent {
     private val sessionRepository: SessionRepository by inject()
+    private val userDataRepository: UserDataRepository by inject()
 
     override suspend fun getDailyStats(days: Int): List<DailyStats> {
         val allSessions = sessionRepository.getSessions().getOrElse { return emptyList() }
@@ -42,7 +44,6 @@ class StatsRepositoryImpl : StatsRepository, KoinComponent {
             val completedSessions = workSessions.size
             val totalFocusTime = workSessions.sumOf { it.duration }
 
-            // Простой расчет продуктивности (0.0 - 1.0)
             val productivityScore = if (completedSessions > 0) {
                 max(0.0, minOf(1.0, completedSessions / 10.0)).toFloat()
             } else {
@@ -119,40 +120,26 @@ class StatsRepositoryImpl : StatsRepository, KoinComponent {
     }
 
     override suspend fun getBestDay(): DailyStats? {
-        val dailyStats = getDailyStats(365) // За последний год
-        return dailyStats.maxByOrNull { it.completedSessions }
+        val userData = userDataRepository.getUserData()
+        return userData.bestDayDate?.let { date ->
+            DailyStats(
+                date = date,
+                completedSessions = userData.bestDaySessions,
+                totalFocusTime = 0,
+                productivityScore = 1.0f
+            )
+        }
     }
 
     override suspend fun getCurrentStreak(): Int {
-        val dailyStats = getDailyStats(30) // Проверяем последние 30 дней
-        var streak = 0
-        val today = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.time
+        return userDataRepository.getUserData().currentStreak
+    }
 
-        for (i in 0 until dailyStats.size) {
-            val stat = dailyStats[i]
-            if (stat.completedSessions > 0 && stat.date.time <= today.time) {
-                streak++
-                // Проверяем, был ли предыдущий день тоже продуктивным
-                if (i > 0) {
-                    val prevStat = dailyStats[i - 1]
-                    val calendar = Calendar.getInstance().apply { time = stat.date }
-                    calendar.add(Calendar.DAY_OF_YEAR, -1)
-                    val previousDay = calendar.time
+    override suspend fun getTotalSessions(): Int {
+        return userDataRepository.getUserData().totalSessions
+    }
 
-                    if (prevStat.date.time != previousDay.time || prevStat.completedSessions == 0) {
-                        break
-                    }
-                }
-            } else {
-                break
-            }
-        }
-
-        return streak
+    override suspend fun getTotalFocusTime(): Int {
+        return userDataRepository.getUserData().totalFocusTime
     }
 }

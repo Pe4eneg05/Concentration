@@ -11,4 +11,6 @@ interface StatsRepository {
     suspend fun getProductivityTrend(days: Int): ProductivityTrend
     suspend fun getBestDay(): DailyStats?
     suspend fun getCurrentStreak(): Int
+    suspend fun getTotalSessions(): Int
+    suspend fun getTotalFocusTime(): Int
 }

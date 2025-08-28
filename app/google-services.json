@@ -12,7 +12,12 @@
           "package_name": "com.pechenegmobilecompanyltd.concentration"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "746991647309-41uu31niinvnl4ja8ilep1uol1c8v65o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDONIBAeZRRYYosr62s1fRYJ3wm1xQS09c"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "746991647309-41uu31niinvnl4ja8ilep1uol1c8v65o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
